@@ -1,0 +1,305 @@
+:root {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --bg-hover: #37373d;
+  --bg-active: #414042;
+  --border-color: #3e3e42;
+  --text-primary: #cccccc;
+  --text-secondary: #969696;
+  --text-muted: #6a6a6a;
+  --accent-blue: #007acc;
+  --accent-green: #4ec9b0;
+  --accent-orange: #ce9178;
+  --accent-purple: #c586c0;
+  --accent-red: #f44747;
+  --accent-yellow: #dcdcaa;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.vedx-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.vedx-sidebar {
+  width: 250px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 400px;
+}
+
+.vedx-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+}
+
+.vedx-header {
+  height: 35px;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  justify-content: space-between;
+}
+
+.vedx-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.vedx-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.vedx-editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+}
+
+.vedx-terminal-area {
+  height: 200px;
+  background-color: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+  resize: vertical;
+  min-height: 100px;
+  max-height: 400px;
+}
+
+.vedx-chat-panel {
+  width: 300px;
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  min-width: 250px;
+  max-width: 500px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-active);
+}
+
+/* Button styles */
+.vedx-button {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.vedx-button:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--accent-blue);
+}
+
+.vedx-button:active {
+  background-color: var(--bg-active);
+}
+
+/* Input styles */
+.vedx-input {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  outline: none;
+}
+
+.vedx-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 1px var(--accent-blue);
+}
+
+/* Tab styles */
+.vedx-tabs {
+  display: flex;
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  height: 35px;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.vedx-tab {
+  padding: 8px 12px;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-width: 120px;
+  position: relative;
+}
+
+.vedx-tab:hover {
+  background-color: var(--bg-hover);
+}
+
+.vedx-tab.active {
+  background-color: var(--bg-primary);
+  border-bottom: 2px solid var(--accent-blue);
+  color: var(--accent-blue);
+}
+
+.vedx-tab-close {
+  margin-left: 4px;
+  padding: 2px;
+  border-radius: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.vedx-tab-close:hover {
+  opacity: 1;
+  background-color: var(--bg-hover);
+}
+
+/* Animations */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading animation */
+.vedx-loading {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--bg-hover);
+  border-radius: 50%;
+  border-top-color: var(--accent-blue);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Code syntax highlighting */
+.vedx-code {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 12px;
+  font-family: 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+/* File type icons */
+.vedx-file-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* Resize handles */
+.vedx-resize-handle {
+  background-color: transparent;
+  cursor: col-resize;
+  width: 4px;
+  position: relative;
+}
+
+.vedx-resize-handle:hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 1px;
+  width: 2px;
+  height: 100%;
+  background-color: var(--accent-blue);
+}
+
+/* Selection styles */
+::selection {
+  background-color: var(--accent-blue);
+  color: white;
+}
+
+/* Focus styles */
+.vedx-input:focus,
+.vedx-button:focus {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* Status indicators */
+.vedx-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.vedx-status-success { background-color: var(--accent-green); }
+.vedx-status-warning { background-color: var(--accent-orange); }
+.vedx-status-error { background-color: var(--accent-red); }
+.vedx-status-info { background-color: var(--accent-blue); }
