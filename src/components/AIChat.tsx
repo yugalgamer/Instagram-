@@ -12,8 +12,11 @@ import {
   Sparkles,
   Code,
   FileText,
-  Lightbulb
+  Lightbulb,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
+import { VedxAPI, VedxWebSocket } from '../services/api';
 
 interface Message {
   id: string;
@@ -42,8 +45,42 @@ What would you like to work on today?`,
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [wsConnection, setWsConnection] = useState<VedxWebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    const ws = new VedxWebSocket(
+      (data) => {
+        if (data.type === 'chat_response') {
+          const aiMessage: Message = {
+            id: Date.now().toString(),
+            type: 'assistant',
+            content: data.data.response,
+            timestamp: new Date(data.data.timestamp)
+          };
+          setMessages(prev => [...prev, aiMessage]);
+          setIsTyping(false);
+        }
+      },
+      (connected) => {
+        setIsConnected(connected);
+      }
+    );
+    
+    setWsConnection(ws);
+    
+    // Check API health
+    VedxAPI.checkHealth().then(health => {
+      console.log('VedxBuilder API Health:', health);
+    });
+
+    return () => {
+      ws.disconnect();
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -212,23 +249,49 @@ Could you provide more details about what you'd like to accomplish? The more con
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const messageContent = inputValue.trim();
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI thinking time
-    setTimeout(() => {
-      const aiResponse: Message = {
+    try {
+      // Try WebSocket first for real-time experience
+      if (wsConnection && isConnected) {
+        wsConnection.sendMessage('chat', {
+          message: messageContent,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        // Fallback to REST API
+        const response = await VedxAPI.sendChatMessage(messageContent);
+        
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          type: 'assistant',
+          content: response.response,
+          timestamp: new Date(response.timestamp)
+        };
+
+        setMessages(prev => [...prev, aiMessage]);
+        setIsTyping(false);
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      
+      // Fallback to local simulation if API fails
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: simulateAIResponse(userMessage.content),
-        timestamp: new Date(),
-        isCode: userMessage.content.toLowerCase().includes('code') || 
-                userMessage.content.toLowerCase().includes('example')
+        content: `I'm having trouble connecting to the VedxAI service right now. Here's a local response:
+
+${simulateAIResponse(messageContent)}
+
+*Note: This is a fallback response. Please check your connection to the VedxBuilder backend.*`,
+        timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, aiResponse]);
+      setMessages(prev => [...prev, aiMessage]);
       setIsTyping(false);
-    }, 1000 + Math.random() * 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -286,13 +349,20 @@ What would you like to work on today?`,
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Bot size={14} color="var(--accent-blue)" />
           <span style={{ fontSize: '12px', fontWeight: 600 }}>VedxAI Assistant</span>
-          <div style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            backgroundColor: 'var(--accent-green)',
-            animation: 'pulse 2s infinite'
-          }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            {isConnected ? (
+              <Wifi size={10} color="var(--accent-green)" title="Connected to VedxAI" />
+            ) : (
+              <WifiOff size={10} color="var(--accent-red)" title="Disconnected" />
+            )}
+            <div style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: isConnected ? 'var(--accent-green)' : 'var(--accent-red)',
+              animation: isConnected ? 'pulse 2s infinite' : 'none'
+            }} />
+          </div>
         </div>
         
         <div style={{ display: 'flex', gap: '4px' }}>

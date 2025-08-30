@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Settings
 } from 'lucide-react';
+import { VedxAPI } from '../services/api';
 
 const Terminal: React.FC = () => {
   const terminalRef = useRef<HTMLDivElement>(null);
@@ -22,89 +23,48 @@ const Terminal: React.FC = () => {
     ''
   ]);
 
-  // Simulate terminal commands for demo purposes
-  const executeCommand = (cmd: string) => {
+  // Execute terminal commands via backend API
+  const executeCommand = async (cmd: string) => {
     const trimmedCmd = cmd.trim();
+    if (!trimmedCmd) return;
+    
     setCommandHistory(prev => [...prev, `$ ${trimmedCmd}`]);
     
-    // Simulate command responses
-    setTimeout(() => {
-      let response = '';
+    try {
+      // Use real backend API
+      const result = await VedxAPI.executeCommand(trimmedCmd, terminals[activeTab]?.cwd || '/workspace');
       
-      switch (trimmedCmd.toLowerCase()) {
-        case 'help':
-          response = `VedxBuilder Terminal Commands:
-  help        - Show this help message
-  clear       - Clear terminal
-  ls          - List directory contents
-  pwd         - Print working directory
-  node -v     - Show Node.js version
-  npm -v      - Show npm version
-  git status  - Show git status
-  python3 -V  - Show Python version
-  
-Type any command to see simulated output!`;
-          break;
-          
-        case 'clear':
-          setCommandHistory([]);
-          return;
-          
-        case 'ls':
-          response = `src/          package.json  README.md     node_modules/
-components/   tsconfig.json vite.config.ts public/`;
-          break;
-          
-        case 'pwd':
-          response = '/workspace/vedxbuilder';
-          break;
-          
-        case 'node -v':
-          response = 'v18.17.0';
-          break;
-          
-        case 'npm -v':
-          response = '9.6.7';
-          break;
-          
-        case 'git status':
-          response = `On branch main
-Your branch is up to date with 'origin/main'.
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git checkout -- <file>..." to discard changes in working directory)
-
-        modified:   src/App.tsx
-        modified:   src/components/Terminal.tsx
-
-no changes added to commit (use "git add ." or "git commit -a")`;
-          break;
-          
-        case 'python3 -v':
-        case 'python -v':
-          response = 'Python 3.11.5';
-          break;
-          
-        default:
-          if (trimmedCmd.startsWith('npm ')) {
-            response = `Running: ${trimmedCmd}
-✓ Command completed successfully`;
-          } else if (trimmedCmd.startsWith('git ')) {
-            response = `Git command: ${trimmedCmd}
-✓ Command completed`;
-          } else if (trimmedCmd.startsWith('cd ')) {
-            response = `Changed directory to: ${trimmedCmd.substring(3)}`;
-          } else if (trimmedCmd === '') {
-            return;
-          } else {
-            response = `Command '${trimmedCmd}' executed successfully.
-This is a simulated terminal for demo purposes.`;
-          }
+      // Update current working directory if changed
+      if (result.cwd !== terminals[activeTab]?.cwd) {
+        setTerminals(prev => prev.map(t => 
+          t.id === activeTab ? { ...t, cwd: result.cwd } : t
+        ));
       }
       
-      setCommandHistory(prev => [...prev, response, '']);
-    }, Math.random() * 500 + 200); // Random delay for realism
+      // Handle special commands
+      if (trimmedCmd.toLowerCase() === 'clear') {
+        setCommandHistory([]);
+        return;
+      }
+      
+      // Add command output
+      if (result.output) {
+        setCommandHistory(prev => [...prev, result.output, '']);
+      }
+      
+      // Show exit code if non-zero
+      if (result.exitCode !== 0) {
+        setCommandHistory(prev => [...prev, `Exit code: ${result.exitCode}`, '']);
+      }
+      
+    } catch (error) {
+      console.error('Terminal command error:', error);
+      setCommandHistory(prev => [...prev, 
+        `Error: Failed to execute command '${trimmedCmd}'`,
+        'Check if VedxBuilder backend is running on port 3001',
+        ''
+      ]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
