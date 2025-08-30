@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
-import { Code2, Terminal, MessageSquare, FileText, Settings, Search, GitBranch } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Code2, Terminal, MessageSquare, FileText, Settings, Search, GitBranch, Monitor } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import CodeEditor from './components/CodeEditor';
 import TerminalComponent from './components/Terminal';
-import AIChat from './components/AIChat';
+import EnhancedAIChat from './components/EnhancedAIChat';
+import CodespaceUI from './components/CodespaceUI';
+import VedxAPI from './services/vedx-api';
 import './App.css';
+import clsx from 'clsx';
 
 export interface FileNode {
   name: string;
@@ -19,6 +22,8 @@ function App() {
   const [openFiles, setOpenFiles] = useState<string[]>(['welcome.md']);
   const [showTerminal, setShowTerminal] = useState(true);
   const [showAIChat, setShowAIChat] = useState(true);
+  const [showCodespace, setShowCodespace] = useState(true);
+  const [apiHealth, setApiHealth] = useState<any>(null);
   const [files, setFiles] = useState<FileNode[]>([
     {
       name: 'src',
@@ -34,6 +39,39 @@ function App() {
     { name: 'README.md', type: 'file', path: '/README.md', content: '# VedxBuilder Project\n\nWelcome to your new VedxBuilder workspace!\n\n## Features\n- Modern code editor with AI assistance\n- Integrated terminal and codespace\n- Smart autocomplete and suggestions\n- Real-time collaboration\n\nStart coding and let VedxBuilder help you build amazing projects!' },
     { name: 'welcome.md', type: 'file', path: '/welcome.md', content: '# Welcome to VedxBuilder! 🚀\n\n**VedxBuilder** is your intelligent coding companion, designed to make development faster, smarter, and more enjoyable.\n\n## Key Features\n\n### 🤖 AI-Powered Development\n- Smart code completions and suggestions\n- Natural language to code conversion\n- Intelligent debugging assistance\n- Code optimization recommendations\n\n### 💻 Modern Development Environment\n- Full-featured code editor with syntax highlighting\n- Integrated terminal and command line\n- File explorer and project management\n- Multiple language support\n\n### ☁️ Codespace Integration\n- Cloud-based development environment\n- Instant project setup and deployment\n- Collaborative coding features\n- Version control integration\n\n## Getting Started\n\n1. **Explore the File Explorer** - Browse your project files in the sidebar\n2. **Start Coding** - Open any file and begin editing with intelligent assistance\n3. **Use the Terminal** - Run commands, install packages, and manage your project\n4. **Chat with AI** - Ask questions, get help, and generate code using the AI assistant\n\n## Quick Tips\n\n- Use `Ctrl+P` to quickly open files\n- Press `Ctrl+J` to toggle the terminal\n- Use `Ctrl+Shift+P` for the command palette\n- Chat with AI using natural language for instant help\n\n---\n\n*Ready to build something amazing? Let\'s get started!* ✨' }
   ]);
+
+  useEffect(() => {
+    // Check API health on startup
+    VedxAPI.checkHealth()
+      .then(health => {
+        setApiHealth(health);
+        console.log('VedxBuilder API Health:', health);
+      })
+      .catch(error => {
+        console.error('API health check failed:', error);
+        setApiHealth({ status: 'disconnected' });
+      });
+
+    // Load real file tree from backend
+    VedxAPI.getFileTree()
+      .then(tree => {
+        // Convert backend file tree to frontend format
+        const convertTree = (node: any): FileNode => ({
+          name: node.metadata.name,
+          type: node.metadata.type === 'directory' ? 'folder' : 'file',
+          path: node.path,
+          children: node.children?.map(convertTree),
+          content: undefined // Will be loaded on demand
+        });
+        
+        if (tree.children) {
+          setFiles(tree.children.map(convertTree));
+        }
+      })
+      .catch(error => {
+        console.error('Failed to load file tree:', error);
+      });
+  }, []);
 
   const openFile = (filePath: string) => {
     if (!openFiles.includes(filePath)) {
@@ -113,9 +151,31 @@ function App() {
             >
               <MessageSquare size={14} />
             </button>
+            <button 
+              className="vedx-button"
+              onClick={() => setShowCodespace(!showCodespace)}
+              title="Toggle Codespace"
+            >
+              <Monitor size={14} />
+            </button>
             <button className="vedx-button" title="Settings">
               <Settings size={14} />
             </button>
+            
+            {apiHealth && (
+              <div className={clsx(
+                'px-2 py-1 rounded text-xs flex items-center gap-1',
+                apiHealth.status === 'healthy' 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : 'bg-red-500/20 text-red-400'
+              )}>
+                <div className={clsx(
+                  'w-2 h-2 rounded-full',
+                  apiHealth.status === 'healthy' ? 'bg-green-400' : 'bg-red-400'
+                )} />
+                API
+              </div>
+            )}
           </div>
         </div>
 
@@ -153,7 +213,11 @@ function App() {
           </div>
           
           {showAIChat && (
-            <AIChat />
+            <EnhancedAIChat />
+          )}
+          
+          {showCodespace && (
+            <CodespaceUI />
           )}
         </div>
 
